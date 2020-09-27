@@ -1,0 +1,128 @@
+<html>
+  <head>
+    <title>My first three.js app</title>
+    <style>
+      body { margin: 0; }
+      canvas { display: block; }
+    </style>
+  </head>
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.120.1/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.120.1/examples/js/loaders/GLTFLoader.js"></script>
+    <script>
+      const DUMMY_MONKEY_URL="/assets/model/dummy_monkey.gltf";
+      const MATCAP_URL="/assets/texture/matcap/matcap-porcelain-white.jpg";
+      let scene = new THREE.Scene();
+      let camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+
+      let renderer = new THREE.WebGLRenderer();
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      document.body.appendChild( renderer.domElement );
+
+      let ambientLight = new THREE.AmbientLight( 0x404040 ); // soft white light
+      scene.add( ambientLight );
+
+      let pointLightA = new THREE.PointLight( 0xffffff, 1, 100 );
+      pointLightA.position.set( 10, 10, 10 );
+      scene.add( pointLightA );
+      let pointLightB = new THREE.PointLight( 0xffffff, 1, 100 );
+      pointLightB.position.set( -10, 10, 10 );
+      scene.add( pointLightB );
+
+      let container = new THREE.Group();
+      scene.add( container );
+
+      // let geometry = new THREE.BoxGeometry();
+      // let material = new THREE.MeshStandardMaterial( {
+      //    color: 0x00ff00
+      // } );
+      // let cube = new THREE.Mesh( geometry, material );
+      // container.add( cube );
+
+      {
+        let loader = new THREE.GLTFLoader();
+        loader.load(
+          DUMMY_MONKEY_URL,
+          (gltf)=>{
+            const {scene}=gltf;
+            const suzanneOriginal=scene.getObjectByName("Suzanne");
+            const QTY=6;
+            for(let i=0;i<QTY;++i){
+              const group=new THREE.Group();
+              group.rotateY(THREE.MathUtils.degToRad(i/QTY*-360));
+              container.add(group);
+
+              const clone=suzanneOriginal.clone();
+              const map=clone.material.map.clone();
+              switch(i){
+                case 0:
+                {
+                  clone.material=new THREE.MeshBasicMaterial({
+                    map,
+                  });
+                }
+                break;
+                case 1:
+                {
+                  clone.material=new THREE.MeshMatcapMaterial({
+                    map,
+                    matcap:new THREE.TextureLoader().load(MATCAP_URL),
+                  });
+                }
+                break;
+                case 2:
+                {
+                  clone.material=new THREE.MeshPhongMaterial({
+                    map,
+                  });
+                }
+                break;
+                case 3:
+                {
+                  clone.material=new THREE.MeshStandardMaterial({
+                    map,
+                  });
+                }
+                break;
+                case 4:
+                {
+                  const map=clone.material.map.clone();
+                  clone.material=new THREE.MeshStandardMaterial({
+                    map:map,
+                  });
+                }
+                break;
+                default:
+                break;
+              }
+              clone.position.z=2.8;
+              group.add(clone);
+
+            }
+
+          },
+          ()=>{},
+          (error)=>{
+            console.error("error",error);
+          }
+        );
+      }
+      
+      
+
+      camera.position.z = 5;
+      camera.position.y=1;
+      camera.lookAt(new THREE.Vector3(0,0,0));
+
+      let animate = function () {
+        requestAnimationFrame( animate );
+
+        container.rotation.y += 0.01;
+
+        renderer.render( scene, camera );
+      };
+
+      animate();
+    </script>
+  </body>
+</html>
